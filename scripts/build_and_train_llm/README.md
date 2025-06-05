@@ -1,6 +1,8 @@
 ## 从零搭建并训练一个大语言模型
 
-参考：https://github.com/datawhalechina/tiny-universe/
+Reference：
+* [tiny-universe](https://github.com/datawhalechina/tiny-universe/)
+* [llama2.c](https://github.com/karpathy/llama2.c)
 
 从零开始搭建并训练一个大语言模型主要工作：
 
@@ -87,4 +89,22 @@ if __name__ == "__main__":
 # [1, 346, 2233, 4010, 1475, 4021, 2]
 # Hello, world!
 ```
+
+
+### 2 数据预处理
+
+在文件 `preprocess.py` 中定义了 `process_shard ` 函数，用于处理数据分片。该函数的主要功能是将文本数据分词后，转换为更高效的二进制文件格式，以便后续更快速地加载和处理数据。定义了 `pretokenize` 函数，用于批量处理多个数据分片。通过这一函数，所有数据可以并行处理，进一步加快预处理的速度。
+
+设计了一个 `PretokDataset` 类，用于加载已预处理好的数据集。继承自 `torch.utils.data.IterableDataset` 来定义该数据集，这使得可以更灵活、高效地处理数据。在这个类中，核心是 `__iter__` 方法，它负责生成用于训练的数据批次。
+
+最后，定义了一个 `Task` 类，专门用于迭代数据集，并生成模型所需的输入和目标输出。这一部分的设计确保了数据流的顺畅对接，为模型训练提供了标准化的数据输入。
+
+数据预处理命令：
+
+```bash
+python3 preprocess.py --vocab_size=4096 --dataset_dir=./TinyStories/TinyStories_all_data/ --tokenizer_model_path=./tok4096.model
+```
+
+数据预处理完成之后，在`TinyStories/TinyStories_all_data/tok4096/`下面会有预处理完成的 `datann.bin`。
+
 
