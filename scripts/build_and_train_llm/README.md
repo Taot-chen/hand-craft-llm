@@ -108,3 +108,95 @@ python3 preprocess.py --vocab_size=4096 --dataset_dir=./TinyStories/TinyStories_
 数据预处理完成之后，在`TinyStories/TinyStories_all_data/tok4096/`下面会有预处理完成的 `datann.bin`。
 
 
+
+### 3 训练模型
+
+在数据预处理完成后，就可以开始训练模型了。
+
+使用的模型和 LLama2 结构相同， Decoder only Transformer 模型，使用 Pytorch 实现。建模代码在`modeling_tinyllm.py`中。在建模脚本中，`generate` 方法展示了模型如何基于已有的上下文生成后续 token 的机制。
+
+```python
+@torch.inference_mode()
+    def generate(self, idx, max_new_tokens, temperature=1.0, top_k=None):
+        """
+        给定输入序列 idx（形状为 (bz,seq_len) 的长整型张量），通过多次生成新 token 来完成序列。
+        在 model.eval() 模式下运行。效率较低的采样版本，没有使用 kv cache。
+        """
+
+        for _ in range(max_new_tokens):
+            # 如果序列上下文过长，截断它到最大长度
+            idx_cond = idx if idx.size(1) <= self.args.max_seq_len else idx[:, -self.args.max_seq_len:]
+
+            # 前向传播获取序列中最后一个位置的 logits
+            logits = self(idx_cond)
+            logits = logits[:, -1, :] # 只保留最后一个时间步的输出
+
+            if temperature == 0.0:
+                # 选择最有可能的索引
+                _, idx_next = torch.topk(logits, k=1, dim=-1)
+            else:
+                # 缩放 logits 并应用 softmax
+                logits = logits / temperature
+                if top_k is not None:
+                    v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
+                    logits[logits < v[:, [-1]]] = -float('Inf')
+                probs = F.softmax(logits, dim=-1)
+                idx_next = torch.multinomial(probs, num_samples=1)
+
+            # 将采样的索引添加到序列中并继续
+            idx = torch.cat((idx, idx_next), dim=1)
+
+        return idx
+```
+
+在 `generate` 方法中，首先获取序列中最后一个位置的 `logits`，然后基于这些 `logits` 生成新的 `token`。接着，生成的新 `token` 会被添加到序列中，模型随后会继续生成下一个 `token`。通过这种迭代过程，能够生成完整的文本。
+
+`train_model.py` 中定义了很多超参数，包括但不限于模型的维度，层数，学习率等。`python3 train_model.py`命令即可开始训练模型。
+
+```python
+# -----------------------------------------------------------------------------
+# I/O 配置，用于定义输出目录和训练时的日志记录与评估设置
+out_dir = "./"  # 模型输出保存路径
+eval_interval = 2000  # 评估间隔步数
+log_interval = 1  # 日志记录间隔步数
+eval_iters = 100  # 每次评估时迭代的步数
+eval_only = False  # 如果为True，脚本在第一次评估后立即退出
+always_save_checkpoint = False  # 如果为True，在每次评估后总是保存检查点
+init_from = "scratch"  # 可以选择从头开始训练（'scratch'）或从已有的检查点恢复（'resume'）
+
+# 数据配置
+batch_size = 8  # 每个微批次的样本数量，如果使用梯度累积，实际批次大小将更大
+max_seq_len = 256  # 最大序列长度
+vocab_size = 4096  # 自定义词汇表大小
+
+# 模型配置
+dim = 288  # 模型的隐藏层维度
+n_layers = 8  # Transformer的层数
+n_heads = 8  # 注意力头的数量
+n_kv_heads = 4  # 模型分组
+multiple_of = 32  # 在某些层的维度必须是该数的倍数
+dropout = 0.0  # Dropout概率
+
+# AdamW优化器配置
+gradient_accumulation_steps = 4  # 梯度累积步数，用于模拟更大的批次
+learning_rate = 5e-4  # 最大学习率
+max_iters = 100000  # 总的训练迭代次数
+weight_decay = 1e-1  # 权重衰减系数
+beta1 = 0.9  # AdamW优化器的β1参数
+beta2 = 0.95  # AdamW优化器的β2参数
+grad_clip = 1.0  # 梯度裁剪阈值，0表示不裁剪
+
+# 学习率衰减配置
+decay_lr = True  # 是否启用学习率衰减
+warmup_iters = 1000  # 学习率预热的步数
+
+# 系统设置
+device = "cuda:0"  # 设备选择：'cpu'，'cuda'，'cuda:0'等
+dtype = "bfloat16"  # 数据类型：'float32'，'bfloat16'，'float16'
+```
+
+训练过程中显存消耗在 3GB 以内：
+
+![alt text](./images/image.png)
+
+
