@@ -1,0 +1,1 @@
+modelscope download --dataset AI-ModelScope/TinyStories --local_dir ./TinyStories
