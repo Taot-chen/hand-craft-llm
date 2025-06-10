@@ -1,5 +1,7 @@
 ## 从零搭建并训练一个大语言模型
 
+项目代码：[build_and_train_llm](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/python/build_and_train_llm)
+
 
 从零开始搭建并训练一个大语言模型主要工作：
 
@@ -194,7 +196,7 @@ dtype = "bfloat16"  # 数据类型：'float32'，'bfloat16'，'float16'
 
 训练过程中显存消耗在 3GB 以内：
 
-![alt text](./images/image.png)
+![alt text](./images/llm.png)
 
 
 ### 4 模型推理
@@ -300,11 +302,11 @@ class TextGenerator:
 
 推理过程中显存消耗 300 多 MB：
 
-![alt text](./images/image-1.png)
+![alt text](./images/llm-1.png)
 
 推理输出如下：
 
-![alt text](./images/image-2.png)
+![alt text](./images/llm-2.png)
 
 
 ----------

@@ -1,5 +1,7 @@
 ## 从零搭建 Transformer
 
+项目代码：[build_transformer](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/python/build_transformer)
+
 
 在CV领域中，CNN（卷积神经网络）具有统治地位，但是很长一段时间，在自然语言处理领域，RNN（循环神经网络）、LSTM（长短期记忆递归神经网络）占据了主流地位。作为针对序列建模的模型，RNN、LSTM 在以序列为主要呈现形式的 NLP 任务上展现出远超 CNN 的卓越性能。但是RNN、LSTM 也存在明显的缺陷：
 
@@ -195,13 +197,13 @@ self.register_buffer("bias", torch.tril(torch.ones(config.block_size, config.blo
 
 ​Attention 机制可以实现并行化与长期依赖关系拟合，但一次注意力计算只能拟合一种相关关系，单一的 Attention 机制很难全面拟合语句序列里的相关关系。因此 Transformer 使用了 Multi-Head attention 机制，即同时对一个语料进行多次注意力计算，每次注意力计算都能拟合不同的关系，将最后的多次结果拼接起来作为最后的输出，即可更全面深入地拟合语言信息。
 
-![alt text](./images/image.png)
+![alt text](./images/transformer.png)
 
 对于不同的注意力头，能够拟合不同层次的相关信息。通过多个注意力头同时计算，能够更全面地拟合语句关系。
 
 ​Multi-Head attention 的整体计算流程如下：
 
-![alt text](./images/image-1.png)
+![alt text](./images/transformer-1.png)
 
 多头注意力机制其实就是将原始的输入序列进行多组的自注意力处理；然后再将每一组得到的自注意力结果拼接起来，再通过一个线性层进行处理，得到最终的输出。我们用公式可以表示为：
 
@@ -309,13 +311,13 @@ Seq2Seq，序列转序列，是一种经典 NLP 任务。模型输入是一个�
 
 Transformer 是一个经典的 Seq2Seq 模型，即模型的输入为文本序列，输出为另一个文本序列。Transformer 的整体模型结构如下图：
 
-![alt text](./images/image-2.png)
+![alt text](./images/transformer-2.png)
 
 ​Transformer 整体由一个 Encoder，一个 Decoder 外加一个 Softmax 分类器与两层编码层构成。上图中左侧方框为 Encoder，右侧方框为 Decoder。
 
 在训练时，Transformer 的训练语料为若干个句对，具体子任务可以是机器翻译、阅读理解、机器对话等。以德语到英语的机器翻译任务为例。在训练时，句对会被划分为输入语料和输出语料，输入语料将从左侧通过编码层进入 Encoder，输出语料将从右侧通过编码层进入 Decoder。Encoder 的主要任务是对输入语料进行编码再输出给 Decoder，Decoder 再根据输出语料的历史信息与 Encoder 的输出进行计算，输出结果再经过一个线性层和 Softmax 分类器即可输出预测的结果概率，整体逻辑如下图：
 
-![alt text](./images/image-3.png)
+![alt text](./images/transformer-3.png)
 
 
 #### 2.2 全连接网络（FNN）
@@ -959,6 +961,7 @@ Prompt信息可直接作用于Decoder所有层，实现对模型参数的“隐�
 尽管Encoder-Decoder结构（如T5）在机器翻译等任务仍有优势，但大模型的​​核心价值在于生成与泛化能力​​。Decoder-only凭借简洁性、扩展性和工程友好性，已成为LLM的主流选择。
 
 
+
 ----------
 
 Reference：
@@ -967,4 +970,3 @@ Reference：
 * [NanoGPT](https://github.com/karpathy/nanoGPT)
 * [ChineseNMT](https://github.com/hemingkx/ChineseNMT)
 * [transformer-translator-pytorch](https://github.com/devjwsong/transformer-translator-pytorch)
-
