@@ -599,7 +599,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def PositionEncoding(seq_len, d_model, n=10000):
-    p = np.zeros(seq_len, d_model)
+    p = np.zeros((seq_len, d_model))
     for k in range(seq_len):
         for i in range(int(d_model / 2)):
             denominator = np.power(n, 2 * i / d_model)
@@ -607,7 +607,7 @@ def PositionEncoding(seq_len, d_model, n=10000):
             P[k, 2*i+1] = np.cos(k/denominator)
     return p
 
-p = PositionEncoding(eq_len=4, d_model=4, n=100)
+p = PositionEncoding(seq_len=4, d_model=4, n=100)
 print(p)
 ```
 
