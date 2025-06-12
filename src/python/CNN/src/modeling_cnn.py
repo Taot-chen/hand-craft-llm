@@ -2,47 +2,36 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-class CnnNet(nn.Module):
-    def __init__(self):
-        super(CnnNet, self).__init__()
-        # images input channle = 1
-        # output channel = 6
-        # conv kernel 5x5
-        self.conv1 = nn.Conv2d(1, 6, 5)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        # affine operator for: y = Wx + b
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+class SimpleCNN(nn.Module):
+    def __init__(self, in_channels = 1, num_classes = 10):
+        super(SimpleCNN, self).__init__()
 
-    def forward(self, input):
-        # max_pooling window size: 2x2
-        # 经过relu激活函数，再经过max_pooling池化
-        input = self.conv1(input)
-        input = F.relu(input)
-        input = F.max_pool2d(input, (2, 2))
+        # 定义卷积层1：输入1通道，输出32通道，卷积核大小3x3
+        self.conv1 = nn.Conv2d(in_channels = in_channels, out_channels = 32, kernel_size = 3, stride = 1, padding = 1)
 
-        # If the size is a square you can only specify a single number for pool window size
-        input = self.conv2(input)
-        input = F.relu(input)
-        input = F.max_pool2d(input, 2)
+        # 定义卷积层2：输入32通道，输出64通道
+        self.conv2 = nn.Conv2d(in_channels = 32, out_channels = 64, kernel_size = 3, stride = 1, padding = 1)
 
-        # 铺平
-        input = input.view(-1, self.flat_feature(input))
+        # 定义全连接层
+        self.fc1 = nn.Linear(64 * 7 * 7, 128)  # 输入大小 = 特征图大小 * 通道数
+        self.fc2 = nn.Linear(128, num_classes)  # 10 个类别
 
-        input = self.fc1(input)
-        input = F.relu(input)
+    def forward(self, x):
+        # 第一层卷积 + ReLU
+        x = F.relu(self.conv1(x))
+        # 最大池化
+        x = F.max_pool2d(x, 2)
 
-        input = self.fc2(input)
-        input = F.relu(input)
-        input = self.self(input)
-        return input
+        # 第二层卷积 + ReLU
+        x = F.relu(self.conv2(x))
+        # 最大池化
+        x = F.max_pool2d(x, 2)
 
+        # 展平操作
+        x = x.view(-1, 64 * 7 * 7)
 
-    def flat_feature(self, input):
-        sizes = input.size[1:]   # all dimensions except the batch dimension
-        num_feat = 1
-        for size in sizes:
-            num_feat *= size
-        return num_feat
-
+        # 全连接层 + ReLU
+        x = F.relu(self.fc1(x))
+        # 全连接层输出
+        x = self.fc2(x)
+        return x

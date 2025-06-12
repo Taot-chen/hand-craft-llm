@@ -549,3 +549,180 @@ optimizer.step()
 
 使用 `torchvision` 提供的 `MNIST` 数据集，加载和预处理数据。
 
+```python
+from torchvision import datasets, transforms
+import torch
+
+transform = transforms.Compose([
+    transforms.ToTensor(),  # 转为张量
+    transforms.Normalize((0.5,), (0.5,))  # 归一化到 [-1, 1]
+])
+
+# 加载 MNIST 数据集
+train_dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
+test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, download=True)
+
+train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=64, shuffle=True)
+test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=64, shuffle=False)
+```
+
+如果存在网络问题，数据集下载失败，那么可以先手动下载数据集，之后再在本地加载：
+
+```python
+from torchvision import datasets, transforms
+import torch
+
+transform = transforms.Compose([
+    transforms.ToTensor(),  # 转为张量
+    transforms.Normalize((0.5,), (0.5,))  # 归一化到 [-1, 1]
+])
+
+# 加载 MNIST 数据集
+train_dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=False)
+test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, download=False)
+
+train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=64, shuffle=True)
+test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=64, shuffle=False)
+```
+
+
+
+### 4.2 构建 CNN 模型
+
+前面构建过了 CnnNet，可以直接使用，也可以根据需要修改网络的参数, 使用 nn.Module 构建：
+
+```python
+class SimpleCNN(nn.Module):
+    def __init__(self, in_channels = 1, num_classes = 10):
+        super(SimpleCNN, self).__init__()
+
+        # 定义卷积层1：输入1通道，输出32通道，卷积核大小3x3
+        self.conv1 = nn.Conv2d(in_channels, 32, kernel_size=3, stride=1, padding=1)
+
+        # 定义卷积层2：输入32通道，输出64通道
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+
+        # 定义全连接层
+        self.fc1 = nn.Linear(64 * 7 * 7, 128)  # 输入大小 = 特征图大小 * 通道数
+        self.fc2 = nn.Linear(128, num_classes)  # 10 个类别
+
+    def forward(self, x):
+        # 第一层卷积 + ReLU
+        x = F.relu(self.conv1(x))
+        # 最大池化
+        x = F.max_pool2d(x, 2)
+
+        # 第二层卷积 + ReLU
+        x = F.relu(self.conv2(x))
+        # 最大池化
+        x = F.max_pool2d(x, 2)
+
+        # 展平操作
+        x = x.view(-1, 64 * 7 * 7)
+
+        # 全连接层 + ReLU
+        x = F.relu(self.fc1(x))
+        # 全连接层输出
+        x = self.fc2(x)
+        return x
+
+# 创建模型实例
+# model = SimpleCNN(in_channels = 1, num_classes = 10).to(device)
+```
+
+
+### 4.3 定义损失函数与优化器
+
+使用交叉熵损失和随机梯度下降优化器。
+
+```python
+# 多分类交叉熵损失
+criterion = nn.CrossEntropyLoss()
+
+# 学习率和动量
+optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+```
+
+
+### 4.4 训练模型
+
+训练模型 25 个 epoch，每 5 个 epoch 后输出训练损失。
+
+```python
+num_epochs = 25
+# 设为训练模式
+model.train()
+
+for epoch in range(num_epochs):
+    total_loss = 0
+    for batch_index, (data, targets) in enumerate(tqdm(train_loader)):
+        data = data.to(device)
+        targets = targets.to(device)
+
+        # 前向传播
+        outputs = model(data)
+        loss = criterion(outputs, targets)
+
+        # 反向传播
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+    if (epoch + 1) % 5 == 0:
+        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss / len(train_loader):.4f}")
+```
+
+
+### 4.5 模型评估
+
+在测试集上评估模型的准确率。
+
+```python
+# 设置为评估模式
+model.eval()
+correct = 0
+total = 0
+
+# 评估时不需要计算梯度
+with torch.no_grad():
+    for data, targets in test_loader:
+        data.to(device)
+        targets.to(device)
+        outputs = model(data)
+        _, predicted = torch.max(outputs, 1)
+        total += targets.size(0)
+        correct += (predicted == targets).sum().item()
+accuracy = 100 * correct / total
+print(f"Test Accuracy: {accuracy:.2f}%")
+```
+
+
+### 4.6 可视化结果
+
+可以在测试数据中可视化一些样本及其预测结果。
+
+```python
+dataiter = iter(test_loader)
+images, labels = next(dataiter)
+outputs = model(images)
+_, predictions = torch.max(outputs, 1)
+
+fig, axes = plt.subplots(1, 6, figsize=(12, 4))
+for i in range(6):
+    axes[i].imshow(images[i][0], cmap='gray')
+    axes[i].set_title(f"Label: {labels[i]}\nPred: {predictions[i]}")
+    axes[i].axis('off')
+plt.savefig('./predict_result.png')
+# plt.show()
+```
+
+模型在测试集上输出最终的分类准确率：
+
+```bash
+Test Accuracy: 99.01%
+```
+
+可视化的结果如下图：
+
+![alt text](./images/predict_result.png)
