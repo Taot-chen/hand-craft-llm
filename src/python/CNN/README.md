@@ -395,3 +395,157 @@ $$
 $$
 
 
+
+
+## 3 基于 pytorch 搭建 CNN 网络
+
+### 3.1 定义网络
+
+从基类 `nn.Module`继承，并重载 `__init__()`方法和`forward()`方法。
+
+```python
+import torch
+import torch.nn as nn
+from torch.nn import functional as F
+
+class CnnNet(nn.Module):
+    def __init__(self):
+        super(CnnNet, self).__init__()
+        # images input channle = 1
+        # output channel = 6
+        # conv kernel 5x5
+        self.conv1 = nn.Conv2d(1, 6, 5)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        # affine operator for: y = Wx + b
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, input):
+        # max_pooling window size: 2x2
+        # 经过relu激活函数，再经过max_pooling池化
+        input = self.conv1(input)
+        input = F.relu(input)
+        input = F.max_pool2d(input, (2, 2))
+
+        # If the size is a square you can only specify a single number for pool window size
+        input = self.conv2(input)
+        input = F.relu(input)
+        input = F.max_pool2d(input, 2)
+
+        # 铺平
+        input = input.view(-1, self.flat_feature(input))
+
+        input = self.fc1(input)
+        input = F.relu(input)
+
+        input = self.fc2(input)
+        input = F.relu(input)
+        input = self.self(input)
+        return input
+
+
+    def flat_feature(self, input):
+        sizes = input.size[1:]   # all dimensions except the batch dimension
+        num_feat = 1
+        for size in sizes:
+            num_feat *= size
+        return num_feat
+```
+
+
+### 3.2 parameters
+
+```python
+params = list(cnn_net.parameters())
+print(len(params))  # expected 5: conv1, conv2, fc1, fc2, fc3
+print(params[0].size())  # conv1's .weight
+```
+
+
+### 3.3 反向传播
+
+pytorch 里面实际上是直接调用自动求导即可。
+
+
+```python
+input = torch.randn(1, 1, 32, 32)
+out = cnn_net(input)
+
+# clear grad
+cnn_net.zero_grad()
+
+# 调用反向传播，括号里面的是贡献系数
+out.backward(torch.randn(1, 10))
+```
+
+
+
+### 3.4 损失函数
+
+使用均方误差函数：`nn.MSELoss`:
+
+```python
+output = cnn_net(input)
+target = torch.randn(10)    # dumy target, actual target need to be obtained from the dataset
+# make it the same shape as output
+target = target.view(1, -1)
+
+loss = nn.MSELoss(output, target)
+print(loss)
+```
+
+
+
+### 3.5 更新权重
+
+反向传播从损失函数开始一层一层求导回去，然后更新权重。
+
+考虑正向传播：
+
+```bash
+input --> conv2d --> relu --> maxpool--> conv2d --> relu --> maxpool
+      --> view --> linear --> relu --> linear --> relu --> linear
+      --> MSELoss --> loss
+```
+
+反向传播实际计算是使用链式法则求导求回去然后更新权重，计算公式可以参考前文。pytorch 里面都通过自动求导一步到位了，直接调用`loss.backward()`即可：
+
+```python
+# 在反向传播之前清空梯度
+cnn_net.zero_grad()
+
+print('conv1.bias.grad before backward')
+print(net.conv1.bias.grad)
+
+loss.backward()
+
+print('conv1.bias.grad after backward')
+print(net.conv1.bias.grad)
+```
+
+更新神经网络参数的规则很多，有 SGD, Nesterov-SGD, Adam, RMSProp 等优化器，实现在 `torch.optim` 中，直接调用：
+
+```python
+import torch.optim as optim
+optimizer = optim.SGD(cnn_net.parameters(), lr = 0.01)
+
+# 清空梯度
+optimizer.zero_grad()
+output = cnn_net(input)
+loss = nn.MSELoss(output, target)
+loss.backward()
+
+# 更新权重
+optimizer.step()
+```
+
+
+
+## 4 模型训练与评估
+
+
+### 4.1 数据集加载
+
+使用 `torchvision` 提供的 `MNIST` 数据集，加载和预处理数据。
+
