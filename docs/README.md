@@ -38,3 +38,23 @@ Reference：
 Reference：
 * [tiny-universe](https://github.com/datawhalechina/tiny-universe/)
 * [llama2.c](https://github.com/karpathy/llama2.c)
+
+
+
+---------
+
+
+## Build and Train CNN
+
+卷积神经网络(Convolutional Neural Networks, CNNs)是一种经典的深度学习算法，特别适用于图像处理和分析，适合用于图像特殊提取和分类。
+
+从网络的原理和结构出发，了解 CNN 网络每一层的作用。基于 DNN 的反向传播算法，从第一性原理出发，来反推 CNN 的反向传播算法的的计算。
+
+基于 pytorch 框架，从零开始 CNN 网络，并使用 MNIST 数据集来训练和评估网络。
+
+[从零搭建并训练一个 CNN 网络](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/python/CNN)
+
+
+Reference：
+* [CNN-MNIST-CPP-](https://github.com/xoslh/CNN-MNIST-CPP-)
+* [PyTorch 卷积神经网络|菜鸟教程](https://www.runoob.com/pytorch/pytorch-cnn.html)
