@@ -398,7 +398,7 @@ if __name__ == "__main__":
     train_model(model_torch_rnn, "torch_rnn", inputs = inputs.to(device), targets = targets.to(device))
 ```
 
-网络比较简单，损失下降很快：
+网络比较简单，收敛的很快：
 
 ![Alt text](./images/loss_curve.png)
 

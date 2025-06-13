@@ -6,7 +6,7 @@ Try to start from first principles and manually craft content related to LLMs.
 ----------
 
 
-## Build Transformer
+## Transformer
 
 
 目前，大部分大语言模型都是基于 Transformer 结构改进开发，Transformer 结构是 LLM 的基石。
@@ -28,7 +28,7 @@ Reference：
 ----------
 
 
-## Build and Train LLM
+## LLM
 
 
 基于 pytorch 框架，从零开始搭建并训练一个最朴素的大语言模型。从数据集收集，到 Tokenizer 和 Model 训练，最终使用训练完成的模型尝试做文本生成。
@@ -49,7 +49,7 @@ Reference：
 ---------
 
 
-## Build and Train CNN
+## CNN
 
 卷积神经网络(Convolutional Neural Networks, CNNs)是一种经典的深度学习算法，特别适用于图像处理和分析，适合用于图像特殊提取和分类。
 
@@ -63,3 +63,24 @@ Reference：
 Reference：
 * [CNN-MNIST-CPP-](https://github.com/xoslh/CNN-MNIST-CPP-)
 * [PyTorch 卷积神经网络|菜鸟教程](https://www.runoob.com/pytorch/pytorch-cnn.html)
+
+
+
+
+## RNN
+
+循环神经网络（RNN）能够处理变长序列，擅长挖掘数据中的时序信息。但是存在长期以来问题，难以处理长序列中相距较远的信息关联。
+
+从网络的原理和结构出发，了解 RNN 的构成。
+
+利用 Pytorch 的 RNN module，以及手动搭建 RNN 网络，并训练评估对比了两种方式的效果。
+
+[循环神经网络（RNN）实践](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/python/RNN)
+
+
+
+Reference：
+* [hack-rnns](https://github.com/datawhalechina/hack-rnns/blob/main/docs/chapter1/chapter1.ipynb)
+* [PyTorch 循环神经网络（RNN）|菜鸟教程](https://www.runoob.com/pytorch/pytorch-recurrent-neural-network.html)
+
+
