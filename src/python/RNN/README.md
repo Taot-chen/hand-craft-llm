@@ -73,7 +73,11 @@ RNN 是一种处理序列数据的神经网络，通过循环连接来处理序�
 
 
 
-## 3 Pytorch 中的 RNN
+## 3 构建 RNN 网络
+
+
+### 3.1 基于`torch.nn.RNN`构建 RNN 网络
+
 
 在 PyTorch 中，RNN 可以用于构建复杂的序列模型。
 
@@ -92,7 +96,24 @@ class SimpleRNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(SimpleRNN, self).__init__()
         # 定义 RNN 层
+        # batch_first=True表示输入数据的维度为[batch_size, seq_len, input_szie]
         self.rnn = nn.RNN(input_size, hidden_size, batch_first=True)
+        """
+            多种单层的 RNN 层
+            单向、单层rnn, 1个时间步
+                single_rnn = nn.RNN(input_size=4, hidden_size=3, num_layers=1, batch_first=True)
+                input = torch.randn(1, 1, 4)    # 输入数据维度为[batch_size, time_steps_num, input_size], time_steps_num 实际上就是 input sequence length
+                output, h_n = single_rnn(input) # output维度为[batch_size, time_steps_num, hidden_size=3]，h_n维度为[num_layers=1, batch_size, hidden_size=3]
+
+            单向、单层rnn, 2个时间步
+                single_rnn = nn.RNN(input_size=4, hidden_size=3, num_layers=1, batch_first=True)
+                input = torch.randn(1, 2, 4) # 输入数据维度为[batch_size, time_steps_num, input_size]
+                output, h_n = single_rnn(input) # output维度为[batch_size, time_steps_num, hidden_size=3]，h_n维度为[num_layers=1, batch_size, hidden_size=3]
+
+            双向、单层rnn
+                bi_rnn = nn.RNN(input_size=4, hidden_size=3, num_layers=1, batch_first=True, bidirectional=True)
+                bi_output, bi_h_n = bi_rnn(input)
+        """
 
         # 定义全连接层
         self.fc = nn.Linear(hidden_size, output_size)
@@ -108,3 +129,136 @@ class SimpleRNN(nn.Module):
         return out
 ```
 
+
+
+
+### 3.2 基于 pytorch 手搓 RNN
+
+激活函数使用 $\tanh$，那么 RNN 的公式变成：
+
+
+$$
+[h_t = \tanh (h_{t-1}W_{hh} + x_tW_{xh} + b_h)]
+$$
+
+```python
+class RNNLayer(nn.Module) {
+    def __init__(self, input_size, hidden_size, output_size, num_layers=1, batch_first=True):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.input_size = input_size
+        self.output_size = output_size
+        self.bidirectional = False
+        self.W_hh = nn.Parmater(torch.rand(self.hidden_size, self.hidden_size))
+        self.W_ih = nn.Parmater(torch.rand(self.input_size, self.hidden_size))
+        self.b_ih = nn.Parmater(torch.zeros(self.hidden_size))
+        self.b_hh = nn.Parmater(torch.zeros(self.hidden_size))
+
+    def forward(self, x_t, h_prev=None):
+        """
+            1: torch.matmul(x_t, self.W_ih)
+                x_t包含多个时间步，形状为[batch_size, time_steps_num, input_size]   # input_size 实际上就是 input 的维度 input_dim
+                W_ih形状为[input_size, hidden_size]
+                torch.matmul(x_t, self.W_ih) 输出矩阵形状为[batch_size, time_steps_num, hidden_size]
+
+            2: torch.matmul(h_prev, self.W_hh)
+                h_prev 形状为[batch_size, time_steps_num, hidden_size]
+                W_hh形状为[hidden_size, hidden_size]
+                torch.matmul(h_prev, self.W_hh) 输出矩阵形状为[batch_size, time_steps_num, hidden_size]
+        """
+        if h_prev == None:
+            h_prev = torch.zeros( x_t.size(0), self.hidden_size)
+        output = torch.matmul(x_t, self.W_ih) + self.W_ih + torch.matmul(h_prev, self.W_hh) + self.b_hh
+        output = torch.tanh(output)
+        return output, output[:, -1, :].unsqueeze(0)
+}
+```
+
+
+## 4 训练并测试模型
+
+
+### 4.1 创建数据集
+
+为了训练 RNN，我们生成一些随机的序列数据。这里的目标是将每个序列的最后一个值作为分类的目标。
+
+```python
+# 生成一些随机序列数据
+num_samples = 100000
+seq_len = 100
+input_size = 10
+output_size = 2  # 假设二分类问题
+
+# 随机生成输入数据 (batch_size, seq_len, input_size)
+X = torch.randn(num_samples, seq_len, input_size)
+# 随机生成目标标签 (batch_size, output_size)
+Y = torch.randint(0, output_size, (num_samples,))
+
+# 创建数据加载器
+dataset = TensorDataset(X, Y)
+train_loader = DataLoader(dataset, batch_size=64, shuffle=True)
+```
+
+
+### 4.2 定义损失函数与优化器
+
+```python
+# 定义损失函数和优化器
+criterion = nn.CrossEntropyLoss()  # 多分类交叉熵损失
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+```
+
+
+### 4.3 训练模型
+
+```python
+num_epochs = 25
+model.train()  # 设置模型为训练模式
+
+for epoch in range(num_epochs):
+    total_loss = 0
+    correct = 0
+    total = 0
+
+    for inputs, labels in train_loader:
+        # 前向传播
+        outputs = model(inputs)
+        loss = criterion(outputs, labels)
+
+        # 反向传播和优化
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        # loss
+        total_loss += loss.item()
+
+        # 计算准确率
+        _, predicted = torch.max(outputs, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+    accuracy = 100 * correct / total
+    print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss / len(train_loader):.4f}, Accuracy: {accuracy:.2f}%")
+```
+
+
+
+### 4.4 测试模型
+
+```python
+model.eval()  # 设置模型为评估模式
+
+with torch.no_grad():
+    total = 0
+    correct = 0
+    for inputs, labels in train_loader:
+        outputs = model(inputs)
+        _, predicted = torch.max(outputs, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+    accuracy = 100 * correct / total
+    print(f"Test Accuracy: {accuracy:.2f}%")
+```
