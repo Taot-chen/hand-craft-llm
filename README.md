@@ -99,3 +99,14 @@ Reference:
 
 * [hack-rnns](https://github.com/datawhalechina/hack-rnns/blob/main/docs/chapter1/chapter1.ipynb)
 * [LSTM 原理及其 PyTorch 实现](https://ziheng5.github.io/2024/12/13/LSTM/)
+
+
+
+## GRU
+
+GRU通过合并LSTM中的遗忘门和输入门为更新门，并引入重置门，同时合并单元状态和隐藏状态，使得模型更为简洁，训练速度更快。这种结构上的简化并没有牺牲性能，GRU在很多任务中的表现与LSTM相当，甚至在某些情况下更优。
+
+从 GRU 的网络结构和计算方式出发，手动搭建了 LSTM 的网络。并使用简单的数据集进行了训练。
+
+[GRU 网络](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/python/GRU)
+

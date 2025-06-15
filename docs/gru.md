@@ -1,4 +1,5 @@
-GRU
+项目代码：[GRU](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/python/GRU)
+
 
 ## 1 GRU——门控循环单元
 
@@ -13,7 +14,7 @@ GRU通过合并LSTM中的遗忘门和输入门为更新门，并引入重置门�
 
 模型结构图可以化简成下图所示：
 
-![Alt text](./images/image.png)
+![Alt text](./images/gru.png)
 
 * **$h^{t-1}$**：前一个时间步的隐藏状态（hidden state）。在GRU中，这个隐藏状态会通过更新门、重置门和候选隐藏状态的计算来更新。
 
@@ -27,7 +28,7 @@ GRU通过合并LSTM中的遗忘门和输入门为更新门，并引入重置门�
 
 ### 1.2 GRU 的内部结构
 
-![Alt text](./images/image-1.png)
+![Alt text](./images/gru-1.png)
 
 如上图所示，GRU定义了两个门：R（重置门）和 Z（更新门），可以把他简单的理解为与隐藏状态相关的向量，计算方式如下：
 
@@ -50,7 +51,7 @@ $$
     * 更新门的输出也是一个介于0和1之间的值，这个值决定了前一个时间步的隐藏状态有多少应该被保留，以及新信息有多少应该被加入到当前的隐藏状态中。
 
 
-![Alt text](./images/image-2.png)
+![Alt text](./images/gru-2.png)
 
 如图，重置门产生的值 $R^t$ ，经过公式：
 
@@ -71,7 +72,7 @@ $$
 
 真正的隐藏状态：
 
-![Alt text](./images/image-3.png)
+![Alt text](./images/gru-3.png)
 
 如图所示，真正的隐藏状态 $H^t$ 是**由候选隐藏状态、更新门和前一时间步隐藏状态所决定的**。具体公式如下：
 
