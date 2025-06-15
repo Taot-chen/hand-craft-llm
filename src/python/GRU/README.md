@@ -139,9 +139,9 @@ $$
 ### 2.1 自定义 GRU 层
 
 ```python
-class CostomGRU_layer(nn.Module):
+class CustomGRU_layer(nn.Module):
     def __init__(self, input_size, hidden_size):
-        uper(CostomGRU_layer, self).__init__()
+        super(CustomGRU_layer, self).__init__()
         # 初始化参数
         self.W_xz = nn.Parameter(torch.randn(input_size, hidden_size))  # 更新门的输入到隐藏层的权重
         self.W_hz = nn.Parameter(torch.randn(hidden_size, hidden_size))  # 更新门的隐藏层到隐藏层的权重
@@ -174,14 +174,14 @@ class CostomGRU_layer(nn.Module):
 ### 2.2 自定义 GRU 模型
 
 ```python
-class CostomGRU(nn.Module):
+class CustomGRU(nn.Module):
     def __init__(self, input_size, hidden_size):
-        super(CostomGRU, self).__init__()
+        super(CustomGRU, self).__init__()
         self.input_size = input_size  # 输入特征的维度
         self.hidden_size = hidden_size  # 隐藏层的维度
 
         # 初始化自定义的GRU层
-        self.gru = CostomGRU_layer(self.input_size, self.hidden_size)
+        self.gru = CustomGRU_layer(self.input_size, self.hidden_size)
 
     def forward(self, X, h0 = None):
         # x.shape = (seq_length, batch_size, input_size)
@@ -218,7 +218,7 @@ class CostomGRU(nn.Module):
 ### 2.3 对比自定义的 GRU 和 torch 的 GRU
 
 ```python
-# 将nn.GRU中的4个随机初始化的可学习参数进行保存，并用来替换CostomGRU中CostomGRU_layer随机初始化的可学习参数，并通过torch.allclose判断输出是否相等，若相等则证明MyGRU的实现与官方的nn.GRU是一致的
+# 将nn.GRU中的4个随机初始化的可学习参数进行保存，并用来替换CustomGRU中CustomGRU_layer随机初始化的可学习参数，并通过torch.allclose判断输出是否相等，若相等则证明MyGRU的实现与官方的nn.GRU是一致的
 
 # 初始化nn.GRU
 gru = nn.GRU(input_size=input_size, hidden_size=hidden_size).to(device)
@@ -227,32 +227,32 @@ weight_hh_l0 = gru.weight_hh_l0.T
 bias_ih_l0 = gru.bias_ih_l0
 bias_hh_l0 = gru.bias_hh_l0
 
-# 初始化CostomGRU
-costom_gru = CostomGRU(input_size=input_size, hidden_size=hidden_size).to(device)
+# 初始化CustomGRU
+custom_gru = CustomGRU(input_size=input_size, hidden_size=hidden_size).to(device)
 
-# 替换CostomGRU中的参数
-costom_gru.gru.W_xr = nn.Parameter(weight_ih_l0[:, :costom_gru.gru.W_xr.size(1)])  # 更新门的输入权重
-costom_gru.gru.W_hr = nn.Parameter(weight_hh_l0[:, :costom_gru.gru.W_hr.size(1)])  # 更新门的隐藏权重
+# 替换CustomGRU中的参数
+custom_gru.gru.W_xr = nn.Parameter(weight_ih_l0[:, :custom_gru.gru.W_xr.size(1)])  # 更新门的输入权重
+custom_gru.gru.W_hr = nn.Parameter(weight_hh_l0[:, :custom_gru.gru.W_hr.size(1)])  # 更新门的隐藏权重
 
-costom_gru.gru.W_xz = nn.Parameter(weight_ih_l0[:, costom_gru.gru.W_xr.size(1):costom_gru.gru.W_xr.size(1) + costom_gru.gru.W_xz.size(1)])  # 重置门的输入权重
-costom_gru.gru.W_hz = nn.Parameter(weight_hh_l0[:, costom_gru.gru.W_hr.size(1):costom_gru.gru.W_hr.size(1) + costom_gru.gru.W_hz.size(1)])  # 重置门的隐藏权重
+custom_gru.gru.W_xz = nn.Parameter(weight_ih_l0[:, custom_gru.gru.W_xr.size(1):custom_gru.gru.W_xr.size(1) + custom_gru.gru.W_xz.size(1)])  # 重置门的输入权重
+custom_gru.gru.W_hz = nn.Parameter(weight_hh_l0[:, custom_gru.gru.W_hr.size(1):custom_gru.gru.W_hr.size(1) + custom_gru.gru.W_hz.size(1)])  # 重置门的隐藏权重
 
-costom_gru.gru.W_xh = nn.Parameter(weight_ih_l0[:, costom_gru.gru.W_xr.size(1) + costom_gru.gru.W_xz.size(1):])  # 候选隐藏状态的输入权重
-costom_gru.gru.W_hh = nn.Parameter(weight_hh_l0[:, costom_gru.gru.W_hr.size(1) + costom_gru.gru.W_hz.size(1):])  # 候选隐藏状态的隐藏权重
+custom_gru.gru.W_xh = nn.Parameter(weight_ih_l0[:, custom_gru.gru.W_xr.size(1) + custom_gru.gru.W_xz.size(1):])  # 候选隐藏状态的输入权重
+custom_gru.gru.W_hh = nn.Parameter(weight_hh_l0[:, custom_gru.gru.W_hr.size(1) + custom_gru.gru.W_hz.size(1):])  # 候选隐藏状态的隐藏权重
 
-costom_gru.gru.hb_r = nn.Parameter(bias_hh_l0[:costom_gru.gru.hb_r.size(0)])  # 更新门的偏置
-costom_gru.gru.hb_z = nn.Parameter(bias_hh_l0[costom_gru.gru.hb_r.size(0):costom_gru.gru.hb_z.size(0) + costom_gru.gru.hb_r.size(0)])  # 重置门的偏置
-costom_gru.gru.hb_h = nn.Parameter(bias_hh_l0[costom_gru.gru.hb_z.size(0) + costom_gru.gru.hb_r.size(0):])  # 候选隐藏状态的偏置
+custom_gru.gru.hb_r = nn.Parameter(bias_hh_l0[:custom_gru.gru.hb_r.size(0)])  # 更新门的偏置
+custom_gru.gru.hb_z = nn.Parameter(bias_hh_l0[custom_gru.gru.hb_r.size(0):custom_gru.gru.hb_z.size(0) + custom_gru.gru.hb_r.size(0)])  # 重置门的偏置
+custom_gru.gru.hb_h = nn.Parameter(bias_hh_l0[custom_gru.gru.hb_z.size(0) + custom_gru.gru.hb_r.size(0):])  # 候选隐藏状态的偏置
 
-costom_gru.gru.xb_r = nn.Parameter(bias_ih_l0[:costom_gru.gru.xb_r.size(0)])
-costom_gru.gru.xb_z = nn.Parameter(bias_ih_l0[costom_gru.gru.xb_r.size(0):costom_gru.gru.xb_z.size(0) + costom_gru.gru.xb_r.size(0)])
-costom_gru.gru.xb_h = nn.Parameter(bias_ih_l0[costom_gru.gru.xb_z.size(0) + costom_gru.gru.xb_r.size(0):])
+custom_gru.gru.xb_r = nn.Parameter(bias_ih_l0[:custom_gru.gru.xb_r.size(0)])
+custom_gru.gru.xb_z = nn.Parameter(bias_ih_l0[custom_gru.gru.xb_r.size(0):custom_gru.gru.xb_z.size(0) + custom_gru.gru.xb_r.size(0)])
+custom_gru.gru.xb_h = nn.Parameter(bias_ih_l0[custom_gru.gru.xb_z.size(0) + custom_gru.gru.xb_r.size(0):])
 
 # 初始化输入数据
 x = torch.rand(seq_length, batch_size, input_size).to(device)
 
-# 获取CostomGRU和nn.GRU的输出
-output1, h1 = costom_gru(x)
+# 获取CustomGRU和nn.GRU的输出
+output1, h1 = custom_gru(x)
 output2, h2 = gru(x)
 
 # 使用torch.allclose比较输出是否相等
@@ -399,7 +399,7 @@ class Model(nn.Module):
     def __init__(self, input_size, num_class, hidden_size=768):
         super(Model, self).__init__()
         self.embedding = nn.Embedding(input_size, hidden_size)
-        self.gru = CostomGRU(hidden_size, hidden_size)
+        self.gru = CustomGRU(input_size, hidden_size)
         # self.gru = nn.GRU(hidden_size, hidden_size)
         self.fc1 = nn.Linear(hidden_size, 256)
         self.fc2 = nn.Linear(256, num_class)
@@ -570,9 +570,6 @@ def predict(tokens, model, device, max_length=seq_length):
     preds = []
     with torch.no_grad():
         for batch, inputs in enumerate(new_inputs):
-            # 拓展为(seq_length, 1) 形状的二维张量
-            x_unsqueezed = x.unsqueeze(1)
-
             # 将数据存到显卡
             inputs = inputs.to(device)
             size = inputs.size(0)
@@ -709,7 +706,7 @@ tokens = [
 save_root = "models/"
 model = Model(input_size, num_class, hidden_size).to(device)
 model_state_dict = torch.load(save_root + "model_best.pth")
-model
+model.load_state_dict(model_state_dict)
 
 preds, preds_txt = predict(tokens, model, device)
 for idx, token in enumerate(tokens):
