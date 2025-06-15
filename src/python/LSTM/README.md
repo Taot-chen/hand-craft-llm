@@ -272,3 +272,12 @@ dataloader = DataLoader(dataset)
 trainer = L.Trainer(max_epochs=2000)
 trainer.fit(model, train_dataloaders=dataloader)
 ```
+
+
+
+----------
+
+Reference:
+
+* [hack-rnns](https://github.com/datawhalechina/hack-rnns/blob/main/docs/chapter1/chapter1.ipynb)
+* [LSTM 原理及其 PyTorch 实现](https://ziheng5.github.io/2024/12/13/LSTM/)
