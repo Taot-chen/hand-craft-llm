@@ -402,3 +402,10 @@ if __name__ == "__main__":
 
 ![Alt text](./images/loss_curve.png)
 
+
+
+----------
+
+Reference：
+* [hack-rnns](https://github.com/datawhalechina/hack-rnns/blob/main/docs/chapter1/chapter1.ipynb)
+* [PyTorch 循环神经网络（RNN）|菜鸟教程](https://www.runoob.com/pytorch/pytorch-recurrent-neural-network.html)

@@ -726,3 +726,12 @@ Test Accuracy: 99.01%
 可视化的结果如下图：
 
 ![alt text](./images/predict_result.png)
+
+
+
+----------
+
+Reference：
+
+* [CNN-MNIST-CPP-](https://github.com/xoslh/CNN-MNIST-CPP-)
+* [PyTorch 卷积神经网络|菜鸟教程](https://www.runoob.com/pytorch/pytorch-cnn.html)
