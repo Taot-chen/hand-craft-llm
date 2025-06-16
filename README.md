@@ -114,3 +114,18 @@ GRU通过合并LSTM中的遗忘门和输入门为更新门，并引入重置门�
 Reference:
 
 * [hack-rnns](https://github.com/datawhalechina/hack-rnns/)
+
+
+
+## Seq2Seq
+
+Seq2Seq是一种多输入多输出的模型结构，适用于许多实际应用场景，是NLP领域最经典的模型之一。在当前流行的Transformer框架中，依然能看到Seq2Seq的影子。
+
+使用 Encoder + Decoder 的经典结构，并在 Decoder 中加入 Attention 机制，使用 pytorch 框架，手搓 Seq2Seq 网络，并使用简单的数据集来训练网络，实现英语和法语翻译的功能。
+
+[Seq2Seq Hand Craft](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/python/Seq2Seq_hand_craft)
+
+
+Reference:
+
+* [hack-rnns](https://github.com/datawhalechina/hack-rnns/)

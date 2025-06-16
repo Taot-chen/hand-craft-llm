@@ -1,4 +1,5 @@
-Seq2Seq
+
+项目代码：[Seq2Seq Hand Craft](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/python/Seq2Seq_hand_craft)
 
 ## 1 模型分类
 
@@ -15,7 +16,7 @@ Seq2Seq
 
 Seq2Seq是一种多输入多输出的模型结构，适用于许多实际应用场景，是NLP领域最经典的模型之一。在当前流行的Transformer框架中，依然能看到Seq2Seq的影子。下面是Seq2Seq的结构。
 
-![Alt text](./images/image.png)
+![Alt text](./images/seq2seq.png)
 
 Seq2Seq由两个组件组成:
 
@@ -27,7 +28,7 @@ Seq2Seq由两个组件组成:
 
 编码器负责将输入序列（例如，一句话的单词序列）逐步编码成一个固定大小的向量表示。编码器通常由一系列递归神经网络（如RNN,LSTM或GRU）层组成，逐个处理输入序列的元素，并通过隐藏状态来逐步积累上下文信息。最后一个隐藏状态包含了整个输入序列的信息，作为压缩后的输入序列表示，这一向量会传递给解码器。
 
-![Alt text](./images/image-1.png)
+![Alt text](./images/seq2seq-1.png)
 
 编码器结构，由嵌入层和循环神经网络组成。它的输入是一句话，输出为一个n维向量，用于表示该句子的语义。整个过程被称为编码，具体步骤如下：
 
@@ -49,14 +50,14 @@ Seq2Seq由两个组件组成:
 
 最后隐藏状态 c 所包含的语义，可以参考下图。最后的 c 就是包含句子 `what time is it` 的语义向量。
 
-![Alt text](./images/image-2.png)
+![Alt text](./images/seq2seq-2.png)
 
 
 ### 2.2 Decoder 解码器
 
 解码器的主要作用是根据目标生成我们期望的结果。它通过分析输入信息，逐步生成符合目标要求的输出内容，确保生成的结果与预期保持一致。结构如下:
 
-![Alt text](./images/image-3.png)
+![Alt text](./images/seq2seq-3.png)
 
 解码器的输入包括三个部分：
 
@@ -208,7 +209,7 @@ $$
 
 具体示意图
 
-![Alt text](./images/image-4.png)
+![Alt text](./images/seq2seq-4.png)
 
 * 红色箭头第一步是将上一个时间步的隐藏状态单元和Encoder 输出的隐藏向量做点积和缩放
 * 蓝色箭头第二步就是对上一步点积的值做 softmax 归一化, 变成权重
