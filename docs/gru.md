@@ -721,4 +721,4 @@ for idx, token in enumerate(tokens):
 
 Reference:
 
-* [hack-rnns](https://github.com/datawhalechina/hack-rnns/blob/main/docs/chapter1/chapter1.ipynb)
+* [hack-rnns](https://github.com/datawhalechina/hack-rnns/)

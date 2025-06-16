@@ -110,3 +110,7 @@ GRU通过合并LSTM中的遗忘门和输入门为更新门，并引入重置门�
 
 [GRU 网络](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/python/GRU)
 
+
+Reference:
+
+* [hack-rnns](https://github.com/datawhalechina/hack-rnns/)

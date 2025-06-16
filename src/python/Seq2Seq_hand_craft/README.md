@@ -427,3 +427,11 @@ def debug_model():
     print("输出的形状:", output.shape)  
     print("输出结果:", output)
 ```
+
+
+
+----------
+
+Reference:
+
+* [hack-rnns](https://github.com/datawhalechina/hack-rnns/)
