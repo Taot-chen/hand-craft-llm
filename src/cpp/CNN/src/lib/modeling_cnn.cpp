@@ -27,6 +27,7 @@ void ModelCNN::fc_layer (td_size in_size, int out_size) {
 
 int ModelCNN::inference () {
     int ret = 0;
+    // TODO: change the hard parameters to more general code
     for (int i = 0; i < 10; i++) {
         if (this->layers.back()->out(i, 0, 0) > this->layers.back()->out(ret, 0, 0)) ret  = i;
     }
@@ -55,9 +56,10 @@ float ModelCNN::train (tensor_t<float>& input, tensor_t<float>& label) {
         this->layers[i]->update_weights();
 
     float err = 0;
-    for (int i = 0; i < 10； i++) {
+    for (int i = 0; i < 10; i++) {
         float res = label(i, 0, 0) - res_info(i, 0, 0);
         err += res * res;
     }
+    // TODO: change the hard parameters to more general code
     return sqrt(err) * 100;
 }
