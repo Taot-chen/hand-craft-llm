@@ -15,6 +15,8 @@ Try to start from first principles and manually craft content related to LLMs wi
 
 从网络的原理和结构出发，了解 CNN 网络每一层的作用。基于 DNN 的反向传播算法，从第一性原理出发，来反推 CNN 的反向传播算法的的计算。使用 C++，从零开始 CNN 网络，并使用 MNIST 数据集来训练和评估网络。
 
+项目验证**在树莓派5上可以实现不错的训练和推理速度**。
+
 [C++手搓 CNN 网络](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/cpp/CNN)
 
 
