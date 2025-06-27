@@ -2,6 +2,26 @@
 ----------
 
 
+
+# 1 Implementation using C++
+
+## CNN
+
+卷积神经网络(Convolutional Neural Networks, CNNs)是一种经典的深度学习算法，特别适用于图像处理和分析，适合用于图像特殊提取和分类。
+
+从网络的原理和结构出发，了解 CNN 网络每一层的作用。基于 DNN 的反向传播算法，从第一性原理出发，来反推 CNN 的反向传播算法的的计算。使用 C++，从零开始 CNN 网络，并使用 MNIST 数据集来训练和评估网络。
+
+[C++手搓 CNN 网络](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/cpp/CNN)
+
+
+Reference：
+
+* [CNN-MNIST-CPP-](https://github.com/xoslh/CNN-MNIST-CPP-)
+
+
+# 2 Implementation using Python
+
+
 ## Transformer
 
 
@@ -123,3 +143,19 @@ Seq2Seq是一种多输入多输出的模型结构，适用于许多实际应用�
 Reference:
 
 * [hack-rnns](https://github.com/datawhalechina/hack-rnns/)
+
+
+# 3 DeepSeek 技术复现
+
+在 DeepSeek 中，使用了许多新的技术，也有很多经典的技术的新用。探索学习 DeepSeek 中使用的技术，并尝试复现。
+
+* [MoE & DeepSeek MoE](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/deepseek-tech/MoE)
+* [DeepSeek 推理](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/deepseek-tech/Infra)
+* [DeepSeek 逻辑链]()
+
+
+
+
+Reference：
+
+* [unlock-deepseek](https://github.com/datawhalechina/unlock-deepseek/)
