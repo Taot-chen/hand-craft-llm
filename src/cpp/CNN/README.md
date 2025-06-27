@@ -810,8 +810,7 @@ static void update_gradient (gradient_t& grad) {
 
 ## 4 训练 & 推理
 
-
-编译：
+`g++` 直接编译：
 
 ```bash
 cd src/cpp/CNN/src
@@ -849,6 +848,20 @@ g++ main.cpp utils.cpp lib/*.cpp -o main -O3
 > 开启 `O3` 优化，单核训练速度每秒差不多 720 多张图片
 >
 > ![alt text](./images/image-7.png)
+
+
+项目也可以使用 Ninja 进行组织构建：
+
+```bash
+mkdir build
+cd build
+
+cmake -G Ninja ..
+ninja -j $(nproc)
+
+cp ./build/bin/cnn_main src/cnn_main
+# 因为项目有数据及路径依赖，可以在 CMakeLists.txt 里面直接修改 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin) 这里的生成路径到 src/ 也可
+```
 
 
 **TODO：**
