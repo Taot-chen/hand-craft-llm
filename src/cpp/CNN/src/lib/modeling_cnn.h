@@ -18,10 +18,10 @@ class ModelCNN {
         void pool_layer (uint16_t stride, uint16_t kernel_size, td_size in_size);
         void fc_layer (td_size in_size, int out_size);
 
-        td_size& output_size() return this->layers.back()->out.size;
+        td_size& output_size() {return this->layers.back()->out.size;}
 
         int inference ();
-        tensor_t<float>& infer_info() return this->layers.back()->out;
+        tensor_t<float>& infer_info() {return this->layers.back()->out;}
         void forward (tensor_t<float>& input);
         float train (tensor_t<float>& input, tensor_t<float>& label);
 };

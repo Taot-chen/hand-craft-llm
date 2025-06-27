@@ -14,7 +14,7 @@ class FcLayer: public layer_t {
 
         // 铺平后的id
         int id (int x, int y, int z) {
-            return z * (this->in.size.x * this.in.size.y) + y * (this.in.size.x) + x;
+            return z * (this->in.size.x * this->in.size.y) + y * (this->in.size.x) + x;
         }
 
         // activation, sigmoid

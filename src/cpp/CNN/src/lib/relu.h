@@ -7,4 +7,4 @@ class ReluLayer: public layer_t {
         void forward(tensor_t<float>& in) override;
         void update_weights() override {}
         void backward(tensor_t<float>& grad_next_layer) override;
-}
+};

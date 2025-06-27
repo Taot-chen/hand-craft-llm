@@ -9,7 +9,7 @@ class ConvLayer: public layer_t {
         uint16_t kernel_size;
 
         ConvLayer(uint16_t stride, uint16_t kernel_size, uint16_t num_kernel, td_size in_size);
-        td_size map_to_input(td_size out, int z) return {out.x * this->stride, out.y * stride, z}
+        td_size map_to_input(td_size out, int z) {return {out.x * this->stride, out.y * stride, z};}
 
         struct range_t {
             int min_x, min_y, min_z;

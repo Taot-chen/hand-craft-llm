@@ -6,15 +6,15 @@
 int main() {
     std::vector<case_t> train_cases = read_train_cases();
 
-    ModelCNNdel;
+    ModelCNN model;
     // TODO: change the hard parameters to more general code
     model.conv_layer(1, 5, 8, {28, 28, 1});
     model.relu_layer(model.output_size());
     model.pool_layer(2, 2, model.output_size());
 
-    model.conv_layer(1, 2, 10, model.output.size());
+    model.conv_layer(1, 2, 10, model.output_size());
     model.relu_layer(model.output_size());
-    model.pool.layer(2, 2, model.output_size());
+    model.pool_layer(2, 2, model.output_size());
 
     model.conv_layer(1, 2, 12, model.output_size());
     model.relu_layer(model.output_size());
@@ -26,8 +26,8 @@ int main() {
     float acc = 0;
     PRINT_CYAN("Start Training...");
     int epoches = 10;
-    while (eaccess--) {
-        for (case_t& c: cases) {
+    while (epoches--) {
+        for (case_t& c: train_cases) {
             float err = model.train(c.data, c.out);
             total_err += err;
             cnt++;
@@ -39,13 +39,13 @@ int main() {
         }
     }
     PRINT_CYAN("Start Testing...");
-    cases = read_test_cases();
+    std::vector<case_t>test_cases = read_test_cases();
     acc = total_err = 0;
-    for (case_t& c: cases) {
+    for (case_t& c: test_cases) {
         model.forward(c.data);
         acc += c.out(model.inference(), 0, 0) > 0.5 ? 1.0f : 0.0f;
     }
-    std::cout << "Testing results: acc=" << acc / (float)(cases.size()) << std::endl;
+    std::cout << "Testing results: acc=" << acc / (float)(test_cases.size()) << std::endl;
 
     return 0;
 }

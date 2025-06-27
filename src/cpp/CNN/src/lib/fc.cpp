@@ -1,4 +1,3 @@
-#pragma once
 #include "fc.h"
 
 FcLayer::FcLayer(td_size in_size, int out_size) :
@@ -9,7 +8,7 @@ FcLayer::FcLayer(td_size in_size, int out_size) :
 
         int N = in_size.x * in_size.y * in_size.z;
         for (int i = 0; i < out_size; i++) {
-            for (j = 0; j < N; j ++) {
+            for (int j = 0; j < N; j ++) {
                 this->weights(j, i, 0) = 2.19722f / N * rand() / (float)(RAND_MAX);
             }
         }
@@ -27,11 +26,11 @@ float FcLayer::act_derv(float x) {
 }
 
 
-void FcLayer::forward(tensor_t<float>& in) override {
+void FcLayer::forward(tensor_t<float>& in) {
     this->in = in;
     float now = 0;
     for (int cnt = 0; cnt < this->out.size.x; cnt++, now = 0) {
-        for (int = i = 0; i < this->in.size.x; i++) {
+        for (int i = 0; i < this->in.size.x; i++) {
             for (int j = 0; j < this->in.size.y; j++) {
                 for (int k = 0; k < this->in.size.z; k++) {
                     now += in(i, j, k) * this->weights(this->id(i, j, k), cnt, 0);
@@ -44,10 +43,10 @@ void FcLayer::forward(tensor_t<float>& in) override {
 }
 
 
-void FcLayer::update_weights() override {
-    for (int cnt = 0; cnt < this.out.size.x; cnt++) {
+void FcLayer::update_weights() {
+    for (int cnt = 0; cnt < this->out.size.x; cnt++) {
         gradient_t& grad = this->gradients[cnt];
-        for (int = i = 0; i < this->in.size.x; i++) {
+        for (int i = 0; i < this->in.size.x; i++) {
             for (int j = 0; j < this->in.size.y; j++) {
                 for (int k = 0; k < this->in.size.z; k++) {
                     float& w = this->weights(this->id(i, j, k), cnt, 0);
@@ -60,23 +59,23 @@ void FcLayer::update_weights() override {
 }
 
 
-void FcLayer::backward(tensor_t<float>& grad_next_layer)override {
+void FcLayer::backward(tensor_t<float>& grad_next_layer){
     // initialize grad_in
-    for (int = i = 0; i < this->in.size.x; i++) {
+    for (int i = 0; i < this->in.size.x; i++) {
         for (int j = 0; j < this->in.size.y; j++) {
             for (int k = 0; k < this->in.size.z; k++) {
-                this->grads_in(i, j, k) = 0;
+                this->grad_in(i, j, k) = 0;
             }
         }
     }
 
     for (int cnt = 0; cnt < this->out.size.x; cnt++) {
-        gradient_t& grad = this->graddients[cnt];
+        gradient_t& grad = this->gradients[cnt];
         grad.grad  =grad_next_layer(cnt, 0, 0) * this->act_derv(this->input[cnt]);
-        for (int = i = 0; i < this->in.size.x; i++) {
+        for (int i = 0; i < this->in.size.x; i++) {
             for (int j = 0; j < this->in.size.y; j++) {
                 for (int k = 0; k < this->in.size.z; k++) {
-                    this->grads_in(i, j, k) += grad.grad * this->weights(this->id(i, j, k), cnt, 0);
+                    this->grad_in(i, j, k) += grad.grad * this->weights(this->id(i, j, k), cnt, 0);
                 }
             }
         }

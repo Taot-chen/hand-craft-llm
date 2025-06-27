@@ -1,4 +1,3 @@
-#pragma once
 #include "conv.h"
 
 ConvLayer::ConvLayer(uint16_t _stride, uint16_t _kernel_size, uint16_t _num_kernel, td_size in_size):
@@ -6,7 +5,7 @@ ConvLayer::ConvLayer(uint16_t _stride, uint16_t _kernel_size, uint16_t _num_kern
     kernel_size(_kernel_size),
     layer_t(layer_type::conv, in_size, {
         (in_size.x - _kernel_size) / _stride + 1,
-        (in_size.y - _kerner_size) / _stride + 1,
+        (in_size.y - kernel_size) / _stride + 1,
         _num_kernel
     }) {
         // initialize kernels
@@ -47,7 +46,7 @@ ConvLayer::range_t ConvLayer::map_to_output(int x, int y) {
             this->out.size.x,
             true
         ),
-        this.get_r(
+        this->get_r(
             (b - this->kernel_size + 1) / this->stride,
             this->out.size.y,
             true
@@ -68,7 +67,7 @@ ConvLayer::range_t ConvLayer::map_to_output(int x, int y) {
 }
 
 
-void ConvLayer::forward (tensor_t<float>& in) override {
+void ConvLayer::forward (tensor_t<float>& in) {
     this->in = in;
     for (int n = 0; n < this->kernels.size(); n++) {
         tensor_t<float>& kernel = this->kernels[n];
@@ -83,14 +82,14 @@ void ConvLayer::forward (tensor_t<float>& in) override {
                         }
                     }
                 }
-                this->out(i, j, k) = total;
+                this->out(i, j, n) = total;
             }
         }
     }
 }
 
 
-void ConvLayer::update_weights () override {
+void ConvLayer::update_weights () {
     for (int n = 0; n < this->kernels.size(); n++) {
         for (int i = 0; i < this->kernel_size; i++) {
             for (int j = 0; j < this->kernel_size; j++) {
@@ -106,7 +105,7 @@ void ConvLayer::update_weights () override {
 }
 
 
-void ConvLayer::backward (tensor_t<float>& grad_next_layer) override {
+void ConvLayer::backward (tensor_t<float>& grad_next_layer) {
     for (int n = 0; n < this->kernels.size(); n++) {
         for (int i = 0; i < this->kernel_size; i++) {
             for (int j = 0; j < this->kernel_size; j++) {
@@ -129,7 +128,7 @@ void ConvLayer::backward (tensor_t<float>& grad_next_layer) override {
                         int min_y = inj * this->stride;
                         for (int ink = rn.min_z; ink <= rn.max_z; ink++) {
                             // 贡献的系数 -> 第 k 个核作用 out[ i, j, k] 对应的 in 区域，in[x, y, z] 的系数
-                            int kk = this->kernels[ink](i - min_x, y - min_y, k);
+                            int kk = this->kernels[ink](i - min_x, j - min_y, k);
                             // 系数 * 偏导
                             total_err += kk * grad_next_layer(ini, inj, ink);
                             // kernel grad 同理
@@ -137,7 +136,7 @@ void ConvLayer::backward (tensor_t<float>& grad_next_layer) override {
                         }
                     }
                 }
-                this->grads_in(i, j, k) = total_err;
+                this->grad_in(i, j, k) = total_err;
             }
         }
     }

@@ -3,7 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include <lib/modeling_cnn.h>
+#include "lib/modeling_cnn.h"
+using namespace std;
 
 struct case_t {
     tensor_t<float> data;

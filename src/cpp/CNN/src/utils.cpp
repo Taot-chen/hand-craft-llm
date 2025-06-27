@@ -28,8 +28,8 @@ uint8_t* read_file(const char* ffile) {
 std::vector<case_t> read_train_cases() {
     std:vector<case_t> cases;
     // TODO: change the hard parameters to more general code
-    uint8_t* train_image = read_file("train-images.idx3-ubyte");
-    uint8_t* train_labels = read_file("train-labels.idx1-ubyte");
+    uint8_t* train_image = read_file("../dataset/train-images.idx3-ubyte");
+    uint8_t* train_labels = read_file("../dataset/train-labels.idx1-ubyte");
     uint32_t case_num = byteswap_uint32 (*(uint32_t*)(train_image + 4));
 
     for (int i = 0; i < case_num; i++) {
@@ -57,8 +57,8 @@ std::vector<case_t> read_train_cases() {
 
 std::vector<case_t> read_test_cases() {
     vector<case_t> cases;
-    uint8_t* test_image = read_file("test-images.idx3-ubyte");
-    uint8_t* test_labels = read_file("test-labels.idx1-ubyte");
+    uint8_t* test_image = read_file("../dataset/test-images.idx3-ubyte");
+    uint8_t* test_labels = read_file("../dataset/test-labels.idx1-ubyte");
     uint32_t case_num = byteswap_uint32(*(uint32_t*)(test_image + 4));
 
     for (int i = 0; i < case_num; i++) {
@@ -66,7 +66,7 @@ std::vector<case_t> read_test_cases() {
             tensor_t<float>(28, 28, 1),
             tensor_t<float>(10, 1, 1)
         };
-        uint8_t* img = test_image + 16 + i * (28 *28)；
+        uint8_t* img = test_image + 16 + i * (28 *28);
         uint8_t* label = test_labels + 8 + i;
         for (int x = 0; x < 28; x++) {
             for (int y = 0; y < 28; y++) {

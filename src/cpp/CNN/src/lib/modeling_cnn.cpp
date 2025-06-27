@@ -1,4 +1,3 @@
-#pragma once
 #include "modeling_cnn.h"
 
 void ModelCNN::conv_layer (uint16_t stride, uint16_t kernel_size, uint16_t num_kernel, td_size in_size) {
@@ -45,7 +44,7 @@ void ModelCNN::forward (tensor_t<float>& input) {
 float ModelCNN::train (tensor_t<float>& input, tensor_t<float>& label) {
     // forward
     this->forward(input);
-    auto res_info = this->layers.back()->out() - label;
+    auto res_info = this->layers.back()->out - label;
 
     // backward
     for (int i = this->layers.size() - 1; i >= 0; i--)

@@ -1,5 +1,6 @@
 #pragma once
 #include "layer.h"
+#include <cfloat>
 
 // MaxPool
 class PoolLayer: public layer_t {

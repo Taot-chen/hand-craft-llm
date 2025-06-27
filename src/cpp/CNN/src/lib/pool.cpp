@@ -1,4 +1,3 @@
-#pragma once
 #include "pool.h"
 
 int PoolLayer::get_r (float f, int max_v, int lim_min) {
@@ -17,7 +16,7 @@ PoolLayer::range_t PoolLayer::map_to_output (int x, int y) {
             this->out.size.x,
             true
         ),
-        this.get_r(
+        this->get_r(
             (b - this->kernel_size + 1) / this->stride,
             this->out.size.y,
             true
@@ -37,16 +36,16 @@ PoolLayer::range_t PoolLayer::map_to_output (int x, int y) {
     };
 }
 
-void PoolLayer::forward (tensor_t<float>& in) override {
+void PoolLayer::forward (tensor_t<float>& in) {
     this->in = in;
     for (int i = 0; i < this->out.size.x; i++) {
         for (int j = 0; j < this->out.size.y; j++) {
             for (int k = 0; k < this->out.size.z; k++) {
-                td_size mapped = this->map_to_output({(uint16_t)i, (uint16_t)j, 0}, 0);
+                td_size mapped = this->map_to_input({(uint16_t)i, (uint16_t)j, 0}, 0);
                 float max_v = -FLT_MAX;
                 for (int ini = 0; ini < this->kernel_size; ini++) {
                     for (int inj = 0; inj < this->kernel_size; inj++) {
-                        float v = in(mapped.x, + ini, mapped.y + inj, k);
+                        float v = in(mapped.x + ini, mapped.y + inj, k);
                         if (v > max_v) max_v = v;
                     }
                 }
@@ -56,7 +55,7 @@ void PoolLayer::forward (tensor_t<float>& in) override {
     }
 }
 
-void PoolLayer::backward (tensor_t<float>& grad_next_layer) override {
+void PoolLayer::backward (tensor_t<float>& grad_next_layer) {
     for (int i = 0; i < this->in.size.x; i++) {
         for (int j = 0; j < this->in.size.y; j++) {
             PoolLayer::range_t rn = this->map_to_output(i, j);
