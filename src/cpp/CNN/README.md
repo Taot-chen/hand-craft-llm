@@ -394,3 +394,421 @@ $$
 \frac{\partial J(W,b)}{\partial b^{l}} = \sum\limits_{u,v}(\delta^l)_{u,v}
 $$
 
+
+## 3 C++ 搭建 CNN 网络
+
+### 3.1 CNN 模型封装
+
+`ModelCNN` 类是提供对外部可访问的类，用来构建模型。
+
+```cpp
+class ModelCNN {
+    private:
+        std::vector<layer_t*> layers;
+    public:
+        ModelCNN () {}
+
+        void conv_layer (uint16_t stride, uint16_t kernel_size, uint16_t num_kernel, td_size in_size);
+        void relu_layer (td_size in_size);
+        void pool_layer (uint16_t stride, uint16_t kernel_size, td_size in_size);
+        void fc_layer (td_size in_size, int out_size);
+
+        td_size& output_size() {return this->layers.back()->out.size;}
+
+        int inference ();
+        tensor_t<float>& infer_info() {return this->layers.back()->out;}
+        void forward (tensor_t<float>& input);
+        float train (tensor_t<float>& input, tensor_t<float>& label);
+};
+```
+
+首先是构建网络，CNN 模型由若干层网络构成，`ModelCNN` 里的 `vector<layer_t*> layers` 存放指向每一层 `Layer` 的指针，然后增加不同 `Layer` 的接口, 分别是 `conv_layer`，`pool_layer`， `fc_layer`，`relu_layer`，不同的网络层需要的参数不一样，按需要自定义。
+
+在训练部分，一次只能喂一张图片进去，需要提供输入图像和它的 label。训练需要：
+
+* 先将输入数据正向传播一遍然后得到此次的输出（一个10维的向量，即10分类）；
+* 将得到的输出再倒序一层一层求偏导反向传播回去；
+* 反向传播结束后就得到了每一层输入的偏导，以及每一层卷积核（或权重）的偏导；
+* 然后 update 每一层的权重（梯度下降更改权重）；
+* 最后计算误差。
+
+
+```cpp
+// func for training
+float ModelCNN::train (tensor_t<float>& input, tensor_t<float>& label) {
+    // forward
+    this->forward(input);
+    auto res_info = this->layers.back()->out - label;
+
+    // backward
+    for (int i = this->layers.size() - 1; i >= 0; i--)
+        this->layers[i]->backward(i < this->layers.size() - 1 ? this->layers[i + 1]->grad_in : res_info);
+
+    // update weights
+    for (int i = 0; i < this->layers.size(); i++)
+        this->layers[i]->update_weights();
+
+    float err = 0;
+    for (int i = 0; i < 10; i++) {
+        float res = label(i, 0, 0) - res_info(i, 0, 0);
+        err += res * res;
+    }
+    return sqrt(err) * 100;
+}
+```
+
+正向传播 `forward` 需要喂一张输入图片进去，然后顺序调用每一层 `Layer` 的 `forward`,
+
+```cpp
+// Model forward
+void ModelCNN::forward (tensor_t<float>& input) {
+    for (int i = 0; i < this->layers.size(); i++) {
+        this->layers[i]->forward(i ? this->layers[i - 1]->out : input);
+    }
+}
+```
+
+最后是推理，`inference` 返回正向传播完后得到答案即预测的数字是哪一个，返回最后得到的答案向量。
+
+```cpp
+// Model inference
+int ModelCNN::inference () {
+    int ret = 0;
+    // TODO: change the hard parameters to more general code
+    for (int i = 0; i < 10; i++) {
+        if (this->layers.back()->out(i, 0, 0) > this->layers.back()->out(ret, 0, 0)) ret  = i;
+    }
+    return ret;
+}
+```
+
+
+### 3.2 Layer 基类封装
+
+不同类型的 Layer 处理的算法不同，各自进行的计算和存的变量也不同，用 C++ 的多态可以很方便进行函数的调用以及其他处理。
+
+Layer 基类的虚函数
+
+* `forward` 正向传播
+* `backward` 反向传播求梯度
+* `update_weights` 更新权重
+
+```cpp
+//layer基类
+enum class layer_type {
+    conv,
+    fc,
+    relu,
+    pool,
+    dropout
+};
+
+class layer_t {
+    public:
+        layer_type _type;
+        tensor_t<float> grad_in;
+        tensor_t<float> in;
+        tensor_t<float> out;
+        layer_t (layer_type _type_, td_size in_size, td_size out_size):
+            _type(_type_),
+            in(in_size.x, in_size.y, in_size.z),
+            out(out_size.x, out_size.y, out_size.z),
+            grad_in(in_size.x, in_size.y, in_size.z)
+        {}
+        virtual ~layer_t(){}
+        virtual void forward(tensor_t<float>& in) = 0;
+        virtual void backward(tensor_t<float>& grad_next_layer) = 0;
+        virtual void update_weights() = 0;
+};
+```
+
+### 3.3 卷积层（convolutional layer）
+
+卷积层是 CNN 核心的网络层，输入是三维 tensor ，输出是三维 tensor 。
+
+```cpp
+// Conv layer
+class ConvLayer: public layer_t {
+    public:
+        std::vector<tensor_t<float>> kernels;
+        std::vector<tensor_t<gradient_t>> kernel_grads;
+        uint16_t stride;
+        uint16_t kernel_size;
+
+        ConvLayer(uint16_t stride, uint16_t kernel_size, uint16_t num_kernel, td_size in_size);
+        td_size map_to_input(td_size out, int z) {return {out.x * this->stride, out.y * stride, z};}
+
+        struct range_t {
+            int min_x, min_y, min_z;
+            int max_x, max_y, max_z;
+        };
+
+        int get_r (float f, int max_v, int lim_min);
+        range_t map_to_output(int x, int y);
+        void forward (tensor_t<float>& in) override;
+        void update_weights () override;
+        void backward (tensor_t<float>& grad_next_layer) override;
+};
+```
+
+在构建 CNN 结构时会 new 一个 `ConvLayer` 的对象，构造函数参数有 `stride`，卷积核大小 `kernel_size`，卷积核数量 `num_kernel`，输入 tensor 的大小 `in_size`。
+
+```cpp
+// initialize conv Kernel
+conv_weight(i, j, k) = 1.0f / N * rand() / 2147483647.0; //随机的值是有讲究的，这个是CNN常用的卷积核随机初值设置
+```
+
+正向传播，直接模拟即可。
+
+反向传播，核心考虑是 `in -> out` 的过程中，每一个 `in` 的变量贡献到不同的 `out` 变量有不同的系数（系数是卷积核里的变量值），所以反向传播时，每个 `in` 变量的 `grad` 等于：
+
+$$
+\sum {正向贡献到 out 的 grad} * {贡献系数}
+$$
+
+除了 `in` 变量的 `grad` 之外，还有每个卷积核的偏导，计算公式和上面类似，系数是 `in` 中的变量值。所以对于每个 `in` 变量求出它正向传播时贡献的范围，然后反向求梯度即可。
+
+```cpp
+// 卷积层反向传播
+for (int i = 0; i < this->in.size.x; i++) {
+    for (int j = 0; j < this->in.size.y; j++) {
+        ConvLayer::range_t rn = this->map_to_output(i, j);
+        for (int k = 0; k < this->in.size.z; k++) {
+            float total_err = 0;
+            // out[i, j, k] -> in[x, y, z] 有贡献的位置
+            for (int ini = rn.min_x; ini <= rn.max_x; ini++) {
+                int min_x = ini * this->stride;
+                for (int  inj = rn.min_y; inj <= rn.max_y; inj++) {
+                    int min_y = inj * this->stride;
+                    for (int ink = rn.min_z; ink <= rn.max_z; ink++) {
+                        // 贡献的系数 -> 第 k 个核作用 out[ i, j, k] 对应的 in 区域，in[x, y, z] 的系数
+                        int kk = this->kernels[ink](i - min_x, j - min_y, k);
+                        // 系数 * 偏导
+                        total_err += kk * grad_next_layer(ini, inj, ink);
+                        // kernel grad 同理
+                        this->kernel_grads[ink](i - min_x, j - min_y, k).grad += this->in(i, j, k) * grad_next_layer(ini, inj, ink);
+                    }
+                }
+            }
+            this->grad_in(i, j, k) = total_err;
+        }
+    }
+}
+```
+
+最后是更新权重，每次调 `update_weights` 之前已经反向传播过了，所以 `grad` 已经求过了，可以直接 `SGD` 梯度下降法更新权重。
+
+```cpp
+// 卷积层更新梯度
+void update_weights() overide {
+    for (int n = 0; n < this->kernels.size(); n++) {
+        for (int i = 0; i < this->kernel_size; i++) {
+            for (int j = 0; j < this->kernel_size; j++) {
+                for (int k = 0; k < this->in.size.z; k++) {
+                    float& w = this->kernels[n].get(i, j, k);
+                    gradient_t& grad = this->kernel_grads[n].get(i, j, k);
+                    w = update_weight(w, grad);
+                    update_gradient(grad);
+                }
+            }
+        }
+    }
+}
+```
+
+
+### 3.4 全连接层（fc layer）
+
+全连接层是 CNN 神经网络的最后一层，在实现的时候默认 fc layer 是最后一层，所以在 fc layer 最后要经过 `sigmoid` 函数。
+
+实际上 fc layer 就是一个特殊的卷积层，卷积核大小和输入的大小相等。
+
+```cpp
+class FcLayer: public layer_t {
+    public:
+        std::vector<float> input;
+        tensor_t<float> weights;
+        std::vector<gradient_t> gradients;
+
+        FcLayer(td_size in_size, int out_size);
+
+        // 铺平后的id
+        int id (int x, int y, int z) {
+            return z * (this->in.size.x * this->in.size.y) + y * (this->in.size.x) + x;
+        }
+
+        // activation, sigmoid
+        float act_func(float x);
+
+        // activation derivative
+        float act_derv(float x);
+
+        void forward(tensor_t<float>& in) override;
+        void update_weights() override;
+        void backward(tensor_t<float>& grad_next_layer)override;
+};
+```
+
+
+### 3.5 Relu 层（Relu layer）
+
+```cpp
+class ReluLayer: public layer_t {
+    public:
+        ReluLayer(td_size in_size): layer_t(layer_type::relu, in_size, in_size) {}
+        void forward(tensor_t<float>& in) override;
+        void update_weights() override {}
+        void backward(tensor_t<float>& grad_next_layer) override;
+};
+```
+
+
+
+### 3.6 池化层（Pooling Layer）
+
+```cpp
+// MaxPool
+class PoolLayer: public layer_t {
+    public:
+        uint16_t stride;
+        uint16_t kernel_size;
+
+        PoolLayer(uint16_t _stride, uint16_t _kernel_size, td_size in_size):
+            stride (_stride),
+            kernel_size(_kernel_size),
+            layer_t(
+                layer_type::pool,
+                in_size,
+                {(in_size.x - _kernel_size) / _stride + 1, (in_size.y - _kernel_size) / _stride + 1, in_size.z}
+            )
+        {}
+
+        td_size map_to_input (td_size out, int z) {
+            return {out.x * this->stride, out.y * this->stride, z};
+        }
+
+        struct range_t {
+            int min_x, min_y, min_z;
+            int max_x, max_y, max_z;
+        };
+
+        int get_r (float f, int max_v, int lim_min);
+        range_t map_to_output (int x, int y);
+        void forward (tensor_t<float>& in) override;
+        void update_weights () override {}
+        void backward (tensor_t<float>& grad_next_layer) override;
+};
+```
+
+
+
+### 3.7 张量实现(tensor)
+
+```cpp
+// tensor
+typedef struct dims_t {
+    int x, y, z;
+} td_size;
+
+template<typename T>
+class tensor_t {
+    public:
+        T* data;
+        td_size size;
+        tensor_t (int _x, int _y, int _z) {
+            this->data = new T[_x * _y * _z];
+            this->size.x = _x;
+            this->size.y = _y;
+            this->size.z = _z;
+        }
+
+        tensor_t (const tensor_t& another) {
+            this->data = new T[another.size.x * another.size.y * another.size.z];
+            memcpy(this->data, another.data, another.size.x * another.size.y * another.size.z * sizeof(T));
+            this->size = another.size;
+        }
+};
+```
+
+考虑需要的张量维度，训练时图片是单张的喂，mnist 训练集是灰度图片（单通道），那么输入图片是二维的，经过一层多核卷积后就变成三维，后续三维的张量经过池化后输出是三维，经过 relu 后大小不变还是三维，再次经过卷积层，一个卷积核会输出二维的张量，多个卷积核就得到三维的张量，全连接层是在最后一层，输入三维输出一维。
+
+那么需要的张量 tensor 是三维的，支持的操作有：
+
+* 构造一个三维的 tensor
+
+```cpp
+tensor_t(int _x, int _y, int _z) {
+    data = new T [_x * _y * _z], size = {_x, _y, _z};
+}
+```
+
+* 使用下标访问某一位置的值
+
+```cpp
+T& operator () (int _x, int _y, int _z) {
+    return data[_z * (size.x * size.y) + _y * (size.x) + _x];
+}
+```
+
+* 张量加减
+
+```cpp
+tensor_t<T> operator + (tensor_t<T>& another);
+tensor_t<T> operator - (tensor_t<T>& another);
+```
+
+
+
+### 3.8 优化
+
+传统的 Stochastic Gradient Descent（SGD）用于**寻找函数的局部最小值**。SGD 在每次迭代时只选择一个（随机梯度下降）或一小批（小批量梯度下降）样本来估计梯度并更新模型参数。SGD 的更新规则如下：
+
+$$
+W = W - \eta \times \Delta L
+$$​
+
+其中：
+
+* $W$ 表示模型的参数
+* $\eta$ 是学习率，这是一个超参数，用于控制每次参数更新的步长
+* $\Delta L$ 是损失函数 L 对模型参数 W 的梯度，这个梯度是通过在一个样本或一小批样本上计算得出的
+
+在传统的 SGD 算法上进行了优化，使用了 Momentum 和 weight decay 两个 trick 优化 SGD 算法。
+
+* Momentum（动量）主要思想是为梯度下降引入一个动量项，权重不仅受当前梯度影响，也受过去梯度影响。具体来说，每次权重更新不仅取决于当前梯度，还取决于过去的权重更新。这种方法可以**帮助优化器更快地越过平坦区域以及某些局部最小值，减少学习的震荡，并更有可能找到全局最小值**。
+
+* Weight Decay（权重衰减）是一种正则化技术，用于**防止模型过拟合**。在训练过程中，权重衰减会对模型的权重参数进行惩罚，这通常通过在损失函数中添加一个正则化项来实现。这个正则化项是模型权重的 L2 范数（平方和）与一个衰减系数的乘积。通过这种方式，**权重衰减倾向于使模型的权重尽可能小，从而减少模型复杂度，并提高其泛化能力**。
+
+同时使用这两种技术可以更快地收敛训练过程，减少过拟合，提高模型的泛化能力。总的来说，Momentum 可以帮助 SGD 更快地收敛，而 Weight Decay 可以帮助防止模型过拟合。数学形式如下：
+
+* 速度更新：$v = \gamma \times v - \eta \times ( \Delta L + \lambda * W )$
+* 权重更新：$W = W + v$
+
+其中：
+
+* $v$ 是速度变量（动量项）
+* $\gamma$ 是动量系数
+* $\eta$ 是学习率
+* $\Delta L$ 是损失函数的梯度
+* W 是模型权重
+* $\lambda$ 是权重衰减系数
+
+
+在代码实现上的表现：
+
+```cpp
+static float update_weight (float w, gradient_t& grad, float multp = 1) {
+    w -= LEARNING_RATE * (grad.grad + grad.pregrad * MOMENTUM) * multp + LEARNING_RATE * WEIGHT_DECAY * w;
+    return w;
+}
+
+static void update_gradient (gradient_t& grad) {
+    grad.pregrad = (grad.grad + grad.pregrad * MOMENTUM);
+}
+```
+
+
+**TODO：**
+- [ ] 速度优化，使用适量计算指令做矢量化
+- [ ] 支持多通道输入
+- [ ] 去掉模型参数的 hard code
