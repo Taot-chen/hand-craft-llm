@@ -16,7 +16,7 @@ class ConvLayer: public layer_t {
             int max_x, max_y, max_z;
         };
 
-        int get_r (float f, int max_v, int lim_min);
+        int get_r (float f, int max_v, bool lim_min);
         range_t map_to_output(int x, int y);
         void forward (tensor_t<float>& in) override;
         void update_weights () override;

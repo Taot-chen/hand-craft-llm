@@ -49,6 +49,6 @@ class tensor_t {
         }
 
         ~tensor_t () {
-            delete[] this->data;
+            if (this->data) delete[] this->data;
         }
 };

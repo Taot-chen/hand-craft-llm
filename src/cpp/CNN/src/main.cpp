@@ -2,6 +2,7 @@
 #include "lib/modeling_cnn.h"
 #include "utils.h"
 #include "logger.h"
+#include <chrono>
 
 int main() {
     std::vector<case_t> train_cases = read_train_cases();
@@ -12,12 +13,9 @@ int main() {
     model.relu_layer(model.output_size());
     model.pool_layer(2, 2, model.output_size());
 
-    model.conv_layer(1, 2, 10, model.output_size());
+    model.conv_layer(1, 3, 10, model.output_size());
     model.relu_layer(model.output_size());
     model.pool_layer(2, 2, model.output_size());
-
-    model.conv_layer(1, 2, 12, model.output_size());
-    model.relu_layer(model.output_size());
 
     model.fc_layer(model.output_size(), 10);
 
@@ -25,15 +23,21 @@ int main() {
     int cnt = 0;
     float acc = 0;
     PRINT_CYAN("Start Training...");
-    int epoches = 10;
+    int epoches = 2;
     while (epoches--) {
+        auto start1 = std::chrono::high_resolution_clock::now();
         for (case_t& c: train_cases) {
             float err = model.train(c.data, c.out);
             total_err += err;
             cnt++;
             acc += c.out(model.inference(), 0, 0) > 0.5 ? 1.0f : 0.0f;
             if (cnt %1000 == 0) {
-                std::cout << "cases: " << cnt << " err=" << total_err / cnt << " acc=" << acc / 1000.0f << std::endl;
+                auto dura1 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start1);
+                start1 = std::chrono::high_resolution_clock::now();
+                std::cout << "cases: " << cnt << " err=" << total_err / cnt
+                    << " acc=" << acc / 1000.0f
+                    << " " << 1000.0f / dura1.count() * 1000 << " pics/s"
+                    << std::endl;
                 acc = 0;
             }
         }

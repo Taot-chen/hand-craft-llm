@@ -5,7 +5,7 @@ ConvLayer::ConvLayer(uint16_t _stride, uint16_t _kernel_size, uint16_t _num_kern
     kernel_size(_kernel_size),
     layer_t(layer_type::conv, in_size, {
         (in_size.x - _kernel_size) / _stride + 1,
-        (in_size.y - kernel_size) / _stride + 1,
+        (in_size.y - _kernel_size) / _stride + 1,
         _num_kernel
     }) {
         // initialize kernels
@@ -29,9 +29,9 @@ ConvLayer::ConvLayer(uint16_t _stride, uint16_t _kernel_size, uint16_t _num_kern
     }
 
 
-int ConvLayer::get_r (float f, int max_v, int lim_min) {
+int ConvLayer::get_r (float f, int max_v, bool lim_min) {
     if (f <= 0) return  0;
-    max_v = -1;
+    max_v -= 1;
     if (f >= max_v) return max_v;
     if (lim_min) return ceil(f);
     else return floor(f);

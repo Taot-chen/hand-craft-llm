@@ -50,8 +50,8 @@ std::vector<case_t> read_train_cases() {
         }
         cases.push_back(c);
     }
-    delete[] train_image;
-    delete[] train_labels;
+    if (train_image) delete[] train_image;
+    if (train_labels) delete[] train_labels;
     return cases;
 }
 
@@ -78,7 +78,8 @@ std::vector<case_t> read_test_cases() {
         }
         cases.push_back(c);
     }
-    delete[] test_image;
-    delete[] test_labels;
+
+    if (test_image) delete[] test_image;
+    if (test_labels) delete[] test_labels;
     return cases;
 }

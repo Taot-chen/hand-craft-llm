@@ -1,0 +1,5 @@
+*.o
+*.ckpt
+*.pth
+.vscode
+*.pt

@@ -1,8 +1,8 @@
 #include "pool.h"
 
-int PoolLayer::get_r (float f, int max_v, int lim_min) {
+int PoolLayer::get_r (float f, int max_v, bool lim_min) {
     if (f <= 0) return  0;
-    max_v = -1;
+    max_v -= 1;
     if (f >= max_v) return max_v;
     if (lim_min) return ceil(f);
     else return floor(f);
