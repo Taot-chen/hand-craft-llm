@@ -808,7 +808,48 @@ static void update_gradient (gradient_t& grad) {
 ```
 
 
+## 4 训练 & 推理
+
+
+编译：
+
+```bash
+cd src/cpp/CNN/src
+g++ main.cpp utils.cpp lib/*.cpp -o main
+./main
+```
+
+此时训练跑的比较慢，每秒只能处理 146 张图片，
+
+![alt text](./images/image-4.png)
+
+打开 `g++` 的 `O3` 优化：
+
+```bash
+cd src/cpp/CNN/src
+g++ main.cpp utils.cpp lib/*.cpp -o main -O3
+./main
+```
+
+此时训练每秒可以处理 1130 多张图片，
+
+![alt text](./images/image-5.png)
+
+
+此时训练跑在 CPU 单核上，后续还有较大优化空间。
+
+
 **TODO：**
-- [ ] 速度优化，使用适量计算指令做矢量化
+- [ ] 速度优化，使用矢量计算指令做矢量化
+- [ ] 添加并行处理
 - [ ] 支持多通道输入
 - [ ] 去掉模型参数的 hard code
+- [ ] 支持非 CPU device
+
+
+
+----------
+
+Reference：
+
+* [CNN-MNIST-CPP-](https://github.com/xoslh/CNN-MNIST-CPP-)
