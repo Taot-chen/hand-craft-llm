@@ -163,8 +163,8 @@ Reference:
 
 * [MoE & DeepSeek MoE](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/deepseek-tech/MoE)
 * [DeepSeek 推理](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/deepseek-tech/Infra)
-* [DeepSeek 逻辑链]()
-
+* [DeepSeek 逻辑链](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/deepseek-tech/reasoning)
+* [deepseek 复现](https://github.com/Taot-chen/hand-craft-llm/tree/main/src/deepseek-tech/reproduce)
 
 
 

@@ -1,6 +1,7 @@
 *.o
 *.ckpt
 *.pth
-.vscode
+.vscode/
 *.pt
 cnn_main
+build/
