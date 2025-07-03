@@ -853,3 +853,44 @@ def grpo_function(
 
 如果遇到 `Out of Memory `显存不足问题，可以移除 `target_modules` 中的 "q_proj", "k_proj", "v_proj", "o_proj"。
 
+
+
+
+
+## 报错解决
+
+### 1 训练 vllm 报错
+
+```bash
+Unsupported conversion from f16 to f16
+LLVM ERROR: Unsupported rounding mode for conversion.
+```
+
+github 相关 issue：https://github.com/vllm-project/vllm/issues/20259
+
+同样的，triton 也有人提类似的报错：
+
+https://github.com/triton-lang/triton/issues/6698
+https://zhuanlan.zhihu.com/p/1917136776885174369
+
+
+目前 triton-3.3.0 没法和 torch-2.7.0一起使用，需要把 triton 切到 3.2.0，这个问题在 triton-3.4.0 会修复，https://github.com/triton-lang/triton/issues/6698
+
+
+
+
+### 2 OOM
+
+我的环境只有两张 22GB 的 2080Ti，一张用来做 vllm 推理，实际的训练只有一张卡，按照前面的参数设置，很容易 OOM，对训练参数做了缩小处理：
+
+```bash
+per_device_train_batch_size: 8 --> 4
+gradient_accumulation_steps: 8 --> 4
+max_completion_length: 4096 --> 512
+num_generations: 8 --> 4
+```
+
+按照上面的参数设置，训练卡的显存占用峰值为 22177MB，单卡显存最大值 22528MB。训练速度如下：
+
+![Alt text](./images/image-1.png)
+

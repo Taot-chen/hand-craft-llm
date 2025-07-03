@@ -22,8 +22,8 @@ experiment_name: qwen2.5-3B-lr:5e-7_beta:0.001
 
 # 训练参数
 max_steps: 450 # 最大训练步长
-per_device_train_batch_size: 8
-gradient_accumulation_steps: 8
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
 gradient_checkpointing: true
 gradient_checkpointing_kwargs:
   use_reentrant: false
@@ -35,8 +35,8 @@ seed: 2025 # 随机种子，方便实验复现
 # GRPO 算法参数
 beta: 0.001 # KL 惩罚因子
 max_prompt_length: 256 # 输入 prompt 最大长度
-max_completion_length: 1024 # 输出回答长度，包含推理思维链，设为 4K 比较合适
-num_generations: 8
+max_completion_length: 512 # 输出回答长度，包含推理思维链，设为 4K 比较合适
+num_generations: 4
 use_vllm: true # 启用 vllm 来加速推理
 vllm_device: cuda:1 # 留出一张卡来启用 vllm 推理
 vllm_gpu_memory_utilization: 0.5
