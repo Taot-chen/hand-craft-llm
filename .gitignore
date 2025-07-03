@@ -5,3 +5,8 @@
 *.pt
 cnn_main
 build/
+completion_samples/
+dataset/
+models/
+output/
+wandb/
