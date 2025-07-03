@@ -114,7 +114,7 @@ use_cpu: false
 
 在终端输入`swanlab login`，粘贴前面复制的 API Key，回车，出现类似如下提示就是登录成功。　
 
-![alt text](image.png)
+![alt text](./images/image.png)
 
 后面会用到，这里配置登录完成即可。
 
